@@ -38,8 +38,19 @@ public class ResizeInstructionsTest {
 	 * which leads to {@link ClassNotFoundException}.
 	 */
 	@Test
-	public void test() throws IOException {
-		byte[] bytes = createClass();
+	public void test() throws IOException, ClassNotFoundException {
+		final byte[] bytes = createClass();
+
+		new ClassLoader() {
+			@Override
+			protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+				if (name.equals("Foo")) {
+					return defineClass(name, bytes, 0, bytes.length);
+				}
+				return super.loadClass(name, resolve);
+			}
+		}.loadClass("Foo");
+
 		IRuntime runtime = new SystemPropertiesRuntime();
 		Instrumenter instrumenter = new Instrumenter(runtime);
 		try {
