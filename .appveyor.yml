@@ -10,6 +10,7 @@ install:
   - SET PATH=C:\Users\appveyor\apache-maven-3.3.9\bin;%PATH%
 
 build_script:
+  - mvn -V -B -e org.apache.maven.plugins:maven-dependency-plugin:2.10:resolve-plugins -DexcludeGroupIds=org.jacoco
   # Maven 3.3.9 requires Java >= 7, but generation of Javadocs requires Java <= 6 (https://github.com/jacoco/jacoco/issues/110)
   - mvn -V -B -e verify -Djdk.version=1.6 --toolchains=.travis\appveyor-toolchains.xml
 
