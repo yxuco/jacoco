@@ -9,6 +9,8 @@ JaCoCo is a free Java code coverage library distributed under the Eclipse Public
 License. Check the [project homepage](http://www.eclemma.org/jacoco)
 for downloads, documentation and feedback.
 
+This fork added method-level "include, exclude" to coverage report for groups. To use it, edit ant build xml for report, and add the following attributes to a group tag: include="RegEx for included methods" or exclude="RegEx for excluded methods".
+
 Please use our [mailing list](https://groups.google.com/forum/?fromgroups=#!forum/jacoco)
 for questions regarding JaCoCo which are not already covered by the
 [extensive documentation](http://www.eclemma.org/jacoco/trunk/doc/).
