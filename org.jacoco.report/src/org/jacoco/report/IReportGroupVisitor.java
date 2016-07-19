@@ -73,10 +73,6 @@ public interface IReportGroupVisitor {
 	 * 
 	 * @param name
 	 *            name of the group
-	 * @param include
-	 *            name pattern of methods included for code coverage
-	 * @param exclude
-	 *            name pattern of methods excluded for code coverage
 	 * 
 	 * @return visitor for the group's content
 	 * @throws IOException
