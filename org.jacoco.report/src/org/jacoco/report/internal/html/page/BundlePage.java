@@ -56,8 +56,11 @@ public class BundlePage extends TablePage<ICoverageNode> {
 	}
 
 	/**
-	 * @return
+	 * Render report page for the bundle
+	 * 
+	 * @return new bundle coverage data including only filtered methods
 	 * @throws IOException
+	 *             if failed to render the page
 	 */
 	public IBundleCoverage render() throws IOException {
 		// get method filter info from report context

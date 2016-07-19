@@ -36,14 +36,16 @@ import org.jacoco.core.analysis.IBundleCoverage;
 public interface IReportGroupVisitor {
 
 	/**
-	 * Called to add a bundle to the the report.
+	 * Called to add a bundle to the report.
 	 * 
 	 * @param bundle
 	 *            a bundle to include in the report
 	 * @param locator
 	 *            source locator for this bundle
 	 * @param include
+	 *            name pattern of methods included for code coverage
 	 * @param exclude
+	 *            name pattern of methods excluded for code coverage
 	 * @throws IOException
 	 *             in case of IO problems with the report writer
 	 */
@@ -51,9 +53,14 @@ public interface IReportGroupVisitor {
 			String include, String exclude) throws IOException;
 
 	/**
+	 * add a bundle to the report with no method filters
+	 * 
 	 * @param bundle
+	 *            a bundle to include in the report
 	 * @param locator
+	 *            source locator for this bundle
 	 * @throws IOException
+	 *             in case of IO problems with the report writer
 	 */
 	void visitBundle(IBundleCoverage bundle, ISourceFileLocator locator)
 			throws IOException;

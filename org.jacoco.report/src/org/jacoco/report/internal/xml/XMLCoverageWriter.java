@@ -61,8 +61,10 @@ public final class XMLCoverageWriter {
 	 * @param element
 	 *            container element for the bundle data
 	 * @param include
+	 *            RegEx pattern for name of included methods
 	 * @param exclude
-	 * @return
+	 *            RegEx pattern for name of excluded methods
+	 * @return new bundle coverage data including only filtered methods
 	 * @throws IOException
 	 *             if XML can't be written to the underlying output
 	 */

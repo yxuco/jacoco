@@ -78,8 +78,12 @@ public abstract class TablePage<NodeType extends ICoverageNode>
 	}
 
 	/**
+	 * HTML content of the page with no method filter
+	 * 
 	 * @param body
+	 *            HTML element for page body
 	 * @throws IOException
+	 *             if failed to render the page
 	 */
 	protected void content(final HTMLElement body) throws IOException {
 		content(body, getNode());

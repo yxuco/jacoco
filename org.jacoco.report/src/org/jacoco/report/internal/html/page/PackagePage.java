@@ -59,8 +59,11 @@ public class PackagePage extends TablePage<IPackageCoverage> {
 	}
 
 	/**
-	 * @return
+	 * Render the page for package coverage
+	 * 
+	 * @return new package coverage data including only filtered methods
 	 * @throws IOException
+	 *             if failed to render the page
 	 */
 	public IPackageCoverage render() throws IOException {
 		// get method filter info from report context

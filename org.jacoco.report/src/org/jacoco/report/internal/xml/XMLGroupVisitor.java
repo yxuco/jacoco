@@ -36,8 +36,6 @@ public class XMLGroupVisitor extends AbstractGroupVisitor {
 	 *            must not be closed yet to allow adding additional attributes.
 	 * @param name
 	 *            name of the group
-	 * @param include
-	 * @param exclude
 	 * @throws IOException
 	 *             in case of problems with the underlying writer
 	 */

@@ -59,8 +59,12 @@ public class SourceFilePage extends NodePage<ISourceNode> {
 	}
 
 	/**
+	 * page content for the source file coverage
+	 * 
 	 * @param body
+	 *            HTML body for the content
 	 * @throws IOException
+	 *             if failed to write the page
 	 */
 	@Override
 	protected void content(final HTMLElement body, final ICoverageNode node)

@@ -37,7 +37,9 @@ public abstract class AbstractGroupVisitor implements IReportGroupVisitor {
 	 * @param name
 	 *            name for the coverage node created internally
 	 * @param include
+	 *            RegEx name pattern of included methods for coverage
 	 * @param exclude
+	 *            RegEx name pattern of excluded methods for coverage
 	 */
 	protected AbstractGroupVisitor(final String name) {
 		total = new CoverageNodeImpl(ElementType.GROUP, name);
@@ -65,8 +67,11 @@ public abstract class AbstractGroupVisitor implements IReportGroupVisitor {
 	 * @param locator
 	 *            source locator
 	 * @param include
+	 *            RegEx name pattern of included methods for coverage
 	 * @param exclude
-	 * @return
+	 *            RegEx name pattern of excluded methods for coverage
+	 * @return the new coverage of the bundle including only the filtered
+	 *         methods
 	 * @throws IOException
 	 *             if the report can't be written
 	 */

@@ -69,6 +69,7 @@ public abstract class ReportPage implements ILinkable {
 	 * must be called at most once.
 	 * 
 	 * @param node
+	 *            coverage data to be rendered
 	 * 
 	 * @throws IOException
 	 *             if the page can't be written
@@ -172,6 +173,7 @@ public abstract class ReportPage implements ILinkable {
 	 * @param body
 	 *            body tag of the page
 	 * @param node
+	 *            coverage data to be rendered
 	 * @throws IOException
 	 *             in case of IO problems with the report writer
 	 */

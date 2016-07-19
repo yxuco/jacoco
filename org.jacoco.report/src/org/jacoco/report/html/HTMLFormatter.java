@@ -249,28 +249,38 @@ public class HTMLFormatter implements IHTMLReportContext {
 	}
 
 	/**
-	 * @return
+	 * RegEx pattern for included methods
+	 * 
+	 * @return name pattern for included methods
 	 */
 	public String getInclude() {
 		return include;
 	}
 
 	/**
+	 * update name pattern for included methods
+	 * 
 	 * @param include
+	 *            name pattern for included methods
 	 */
 	public void setInclude(final String include) {
 		this.include = include;
 	}
 
 	/**
-	 * @return
+	 * RegEx pattern for excluded methods
+	 * 
+	 * @return name pattern for excluded methods
 	 */
 	public String getExclude() {
 		return exclude;
 	}
 
 	/**
+	 * update name pattern for excluded methods
+	 * 
 	 * @param exclude
+	 *            name pattern for excluded methods
 	 */
 	public void setExclude(final String exclude) {
 		this.exclude = exclude;

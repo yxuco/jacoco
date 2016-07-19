@@ -62,7 +62,10 @@ public class PackageSourcePage extends TablePage<IPackageCoverage> {
 	}
 
 	/**
+	 * Render the source page
+	 * 
 	 * @throws IOException
+	 *             if failed to render the page
 	 */
 	public void render() throws IOException {
 		renderSourceFilePages();

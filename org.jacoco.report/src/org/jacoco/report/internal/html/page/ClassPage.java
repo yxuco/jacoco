@@ -57,8 +57,11 @@ public class ClassPage extends TablePage<IClassCoverage> {
 	}
 
 	/**
-	 * @return
+	 * Render the coverage page for the class
+	 * 
+	 * @return new class coverage data including only the filtered methods
 	 * @throws IOException
+	 *             if failed to render the page
 	 */
 	public IClassCoverage render() throws IOException {
 		final IClassCoverage c = getNode();
