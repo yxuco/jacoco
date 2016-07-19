@@ -16,6 +16,8 @@ import java.io.IOException;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 import org.jacoco.core.analysis.ICoverageNode.CounterEntity;
+import org.jacoco.core.analysis.IMethodCoverage;
+import org.jacoco.core.internal.analysis.ClassCoverageImpl;
 import org.jacoco.report.ILanguageNames;
 
 /**
@@ -25,8 +27,8 @@ import org.jacoco.report.ILanguageNames;
 class ClassRowWriter {
 
 	private static final CounterEntity[] COUNTERS = { CounterEntity.INSTRUCTION,
-			CounterEntity.BRANCH, CounterEntity.LINE,
-			CounterEntity.COMPLEXITY, CounterEntity.METHOD };
+			CounterEntity.BRANCH, CounterEntity.LINE, CounterEntity.COMPLEXITY,
+			CounterEntity.METHOD };
 
 	private final DelimitedWriter writer;
 
@@ -68,25 +70,92 @@ class ClassRowWriter {
 	 *            vm name of the package
 	 * @param node
 	 *            class coverage data
+	 * @param include
+	 *            filter for included methods
+	 * @param exclude
+	 *            filter for excluded methods
 	 * @throws IOException
 	 *             in case of problems with the writer
 	 */
 	public void writeRow(final String groupName, final String packageName,
-			final IClassCoverage node) throws IOException {
-		writer.write(groupName);
-		writer.write(languageNames.getPackageName(packageName));
-		final String className = languageNames.getClassName(node.getName(),
-				node.getSignature(), node.getSuperName(),
-				node.getInterfaceNames());
-		writer.write(className);
+			final IClassCoverage node, final String include,
+			final String exclude) throws IOException {
 
-		for (final CounterEntity entity : COUNTERS) {
-			final ICounter counter = node.getCounter(entity);
-			writer.write(counter.getMissedCount());
-			writer.write(counter.getCoveredCount());
+		// default not filtered
+		IClassCoverage filtered = node;
+
+		if (include != null) {
+			// include only specified methods
+			filtered = null;
+			final ClassCoverageImpl cci = new ClassCoverageImpl(node.getName(),
+					node.getId(), node.isNoMatch());
+			cci.setSignature(node.getSignature());
+			cci.setSourceFileName(node.getSourceFileName());
+			cci.setSuperName(node.getSuperName());
+
+			for (final IMethodCoverage m : node.getMethods()) {
+				final String name = m.getName();
+				if (name.matches(include)) {
+					// included method
+					// System.out.println(
+					// String.format("CVS added method %s of class %s",
+					// name, node.getName()));
+					cci.addMethod(m);
+					if (null == filtered) {
+						filtered = cci;
+					}
+				} else {
+					// System.out.println(String.format(
+					// "CVS ignored method %s not matching %s in class %s",
+					// name, include, node.getName()));
+				}
+			}
+		} else if (exclude != null) {
+			// exclude specified methods
+			filtered = null;
+			final ClassCoverageImpl cci = new ClassCoverageImpl(node.getName(),
+					node.getId(), node.isNoMatch());
+			cci.setSignature(node.getSignature());
+			cci.setSourceFileName(node.getSourceFileName());
+			cci.setSuperName(node.getSuperName());
+
+			for (final IMethodCoverage m : node.getMethods()) {
+				final String name = m.getName();
+				if (name.matches(exclude)) {
+					// excluded method
+					// System.out.println(String.format(
+					// "CVS ignored method %s matching %s in class %s",
+					// name, exclude, node.getName()));
+				} else {
+					// System.out.println(
+					// String.format("CVS added method %s of class %s",
+					// name, node.getName()));
+					cci.addMethod(m);
+					if (null == filtered) {
+						filtered = cci;
+					}
+				}
+			}
 		}
 
-		writer.nextLine();
+		if (filtered != null) {
+			writer.write(groupName);
+			writer.write(languageNames.getPackageName(packageName));
+			final String className = languageNames.getClassName(node.getName(),
+					node.getSignature(), node.getSuperName(),
+					node.getInterfaceNames());
+			writer.write(className);
+			for (final CounterEntity entity : COUNTERS) {
+				final ICounter counter = filtered.getCounter(entity);
+				writer.write(counter.getMissedCount());
+				writer.write(counter.getCoveredCount());
+			}
+			writer.nextLine();
+		}
 	}
 
+	public void writeRow(final String groupName, final String packageName,
+			final IClassCoverage node) throws IOException {
+		writeRow(groupName, packageName, node, null, null);
+	}
 }

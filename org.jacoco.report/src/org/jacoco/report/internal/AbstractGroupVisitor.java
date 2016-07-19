@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import org.jacoco.core.analysis.CoverageNodeImpl;
 import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.analysis.ICoverageNode.ElementType;
 import org.jacoco.report.IReportGroupVisitor;
 import org.jacoco.report.ISourceFileLocator;
@@ -35,16 +36,25 @@ public abstract class AbstractGroupVisitor implements IReportGroupVisitor {
 	 * 
 	 * @param name
 	 *            name for the coverage node created internally
+	 * @param include
+	 * @param exclude
 	 */
 	protected AbstractGroupVisitor(final String name) {
 		total = new CoverageNodeImpl(ElementType.GROUP, name);
 	}
 
 	public final void visitBundle(final IBundleCoverage bundle,
-			final ISourceFileLocator locator) throws IOException {
+			final ISourceFileLocator locator, final String include,
+			final String exclude) throws IOException {
 		finalizeLastChild();
-		total.increment(bundle);
-		handleBundle(bundle, locator);
+		final ICoverageNode cn = handleBundle(bundle, locator, include,
+				exclude);
+		total.increment(cn);
+	}
+
+	public final void visitBundle(final IBundleCoverage bundle,
+			final ISourceFileLocator locator) throws IOException {
+		visitBundle(bundle, locator, null, null);
 	}
 
 	/**
@@ -54,11 +64,15 @@ public abstract class AbstractGroupVisitor implements IReportGroupVisitor {
 	 *            analyzed bundle
 	 * @param locator
 	 *            source locator
+	 * @param include
+	 * @param exclude
+	 * @return
 	 * @throws IOException
 	 *             if the report can't be written
 	 */
-	protected abstract void handleBundle(IBundleCoverage bundle,
-			ISourceFileLocator locator) throws IOException;
+	protected abstract ICoverageNode handleBundle(IBundleCoverage bundle,
+			ISourceFileLocator locator, String include, String exclude)
+					throws IOException;
 
 	public final IReportGroupVisitor visitGroup(final String name)
 			throws IOException {
@@ -72,6 +86,10 @@ public abstract class AbstractGroupVisitor implements IReportGroupVisitor {
 	 * 
 	 * @param name
 	 *            name of the group
+	 * @param include
+	 *            name pattern of methods included for code coverage
+	 * @param exclude
+	 *            name pattern of methods excluded for code coverage
 	 * @return created child group
 	 * @throws IOException
 	 *             if the report can't be written

@@ -15,6 +15,7 @@ package org.jacoco.report.internal.xml;
 import java.io.IOException;
 
 import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.report.ISourceFileLocator;
 import org.jacoco.report.internal.AbstractGroupVisitor;
 
@@ -35,6 +36,8 @@ public class XMLGroupVisitor extends AbstractGroupVisitor {
 	 *            must not be closed yet to allow adding additional attributes.
 	 * @param name
 	 *            name of the group
+	 * @param include
+	 * @param exclude
 	 * @throws IOException
 	 *             in case of problems with the underlying writer
 	 */
@@ -45,10 +48,11 @@ public class XMLGroupVisitor extends AbstractGroupVisitor {
 	}
 
 	@Override
-	protected void handleBundle(final IBundleCoverage bundle,
-			final ISourceFileLocator locator) throws IOException {
+	protected ICoverageNode handleBundle(final IBundleCoverage bundle,
+			final ISourceFileLocator locator, final String include,
+			final String exclude) throws IOException {
 		final XMLElement child = createChild(bundle.getName());
-		XMLCoverageWriter.writeBundle(bundle, child);
+		return XMLCoverageWriter.writeBundle(bundle, child, include, exclude);
 	}
 
 	@Override

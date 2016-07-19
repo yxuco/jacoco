@@ -13,16 +13,19 @@ package org.jacoco.report.internal.xml;
 
 import java.io.IOException;
 
+import org.jacoco.core.analysis.CoverageNodeImpl;
 import org.jacoco.core.analysis.IBundleCoverage;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.analysis.ICoverageNode.CounterEntity;
+import org.jacoco.core.analysis.ICoverageNode.ElementType;
 import org.jacoco.core.analysis.ILine;
 import org.jacoco.core.analysis.IMethodCoverage;
 import org.jacoco.core.analysis.IPackageCoverage;
 import org.jacoco.core.analysis.ISourceFileCoverage;
 import org.jacoco.core.analysis.ISourceNode;
+import org.jacoco.core.internal.analysis.ClassCoverageImpl;
 
 /**
  * Serializes coverage data as XML fragments.
@@ -57,36 +60,157 @@ public final class XMLCoverageWriter {
 	 *            bundle coverage data
 	 * @param element
 	 *            container element for the bundle data
+	 * @param include
+	 * @param exclude
+	 * @return
 	 * @throws IOException
 	 *             if XML can't be written to the underlying output
 	 */
-	public static void writeBundle(final IBundleCoverage bundle,
-			final XMLElement element) throws IOException {
-		for (final IPackageCoverage p : bundle.getPackages()) {
-			writePackage(p, element);
+	public static ICoverageNode writeBundle(final IBundleCoverage bundle,
+			final XMLElement element, final String include,
+			final String exclude) throws IOException {
+		if (include != null || exclude != null) {
+			// recalculate bundle coverage counts
+			final CoverageNodeImpl bci = new CoverageNodeImpl(
+					ElementType.BUNDLE, bundle.getName());
+
+			boolean interested = false;
+			for (final IPackageCoverage p : bundle.getPackages()) {
+				final ICoverageNode bn = writePackage(p, element, include,
+						exclude);
+				if (bn != null) {
+					bci.increment(bn);
+					interested = true;
+				}
+			}
+			if (interested) {
+				writeCounters(bci, element);
+				return bci;
+			} else {
+				return null;
+			}
+		} else {
+			for (final IPackageCoverage p : bundle.getPackages()) {
+				writePackage(p, element, include, exclude);
+			}
+			writeCounters(bundle, element);
+			return bundle;
 		}
-		writeCounters(bundle, element);
 	}
 
-	private static void writePackage(final IPackageCoverage p,
-			final XMLElement parent) throws IOException {
-		final XMLElement element = createChild(parent, "package", p.getName());
-		for (final IClassCoverage c : p.getClasses()) {
-			writeClass(c, element);
+	private static ICoverageNode writePackage(final IPackageCoverage p,
+			final XMLElement parent, final String include, final String exclude)
+					throws IOException {
+		if (include != null || exclude != null) {
+			// recalculate package-level coverage counts
+			final CoverageNodeImpl pci = new CoverageNodeImpl(
+					ElementType.PACKAGE, p.getName());
+			final XMLElement element = createChild(parent, "package",
+					p.getName());
+			boolean interested = false;
+			for (final IClassCoverage c : p.getClasses()) {
+				final IClassCoverage cn = writeClass(c, element, include,
+						exclude);
+				if (cn != null) {
+					interested = true;
+					pci.increment(cn);
+				}
+			}
+			if (interested) {
+				writeCounters(pci, element);
+				return pci;
+			} else {
+				return null;
+			}
+		} else {
+			final XMLElement element = createChild(parent, "package",
+					p.getName());
+			for (final IClassCoverage c : p.getClasses()) {
+				writeClass(c, element, include, exclude);
+			}
+			for (final ISourceFileCoverage s : p.getSourceFiles()) {
+				writeSourceFile(s, element);
+			}
+			writeCounters(p, element);
+			return p;
 		}
-		for (final ISourceFileCoverage s : p.getSourceFiles()) {
-			writeSourceFile(s, element);
-		}
-		writeCounters(p, element);
 	}
 
-	private static void writeClass(final IClassCoverage c,
-			final XMLElement parent) throws IOException {
-		final XMLElement element = createChild(parent, "class", c.getName());
-		for (final IMethodCoverage m : c.getMethods()) {
-			writeMethod(m, element);
+	private static IClassCoverage writeClass(final IClassCoverage c,
+			final XMLElement parent, final String include, final String exclude)
+					throws IOException {
+		if (include != null) {
+			XMLElement element = null;
+			final ClassCoverageImpl cci = new ClassCoverageImpl(c.getName(),
+					c.getId(), c.isNoMatch());
+			cci.setSignature(c.getSignature());
+			cci.setSourceFileName(c.getSourceFileName());
+			cci.setSuperName(c.getSuperName());
+			boolean interested = false;
+			for (final IMethodCoverage m : c.getMethods()) {
+				final String name = m.getName();
+				if (name.matches(include)) {
+					// include the method
+					// System.out.println(
+					// String.format("XML added method %s of class %s",
+					// name, c.getName()));
+					if (!interested) {
+						element = createChild(parent, "class", c.getName());
+						interested = true;
+					}
+					writeMethod(m, element);
+					cci.addMethod(m);
+				} else {
+					// System.out.println(String.format(
+					// "XML ignored method %s not matching %s in class %s",
+					// name, exclude, c.getName()));
+				}
+			}
+			if (interested) {
+				writeCounters(cci, element);
+				return cci;
+			}
+		} else if (exclude != null) {
+			XMLElement element = null;
+			final ClassCoverageImpl cci = new ClassCoverageImpl(c.getName(),
+					c.getId(), c.isNoMatch());
+			cci.setSignature(c.getSignature());
+			cci.setSourceFileName(c.getSourceFileName());
+			cci.setSuperName(c.getSuperName());
+			boolean interested = false;
+			for (final IMethodCoverage m : c.getMethods()) {
+				final String name = m.getName();
+				if (name.matches(exclude)) {
+					// excluded method
+					// System.out.println(String.format(
+					// "XML ignored method %s matching %s in class %s",
+					// name, exclude, c.getName()));
+				} else {
+					// System.out.println(
+					// String.format("XML added method %s of class %s",
+					// name, c.getName()));
+					if (!interested) {
+						element = createChild(parent, "class", c.getName());
+						interested = true;
+					}
+					writeMethod(m, element);
+					cci.addMethod(m);
+				}
+			}
+			if (interested) {
+				writeCounters(cci, element);
+				return cci;
+			}
+		} else {
+			final XMLElement element = createChild(parent, "class",
+					c.getName());
+			for (final IMethodCoverage m : c.getMethods()) {
+				writeMethod(m, element);
+			}
+			writeCounters(c, element);
+			return c;
 		}
-		writeCounters(c, element);
+		return null;
 	}
 
 	private static void writeMethod(final IMethodCoverage m,

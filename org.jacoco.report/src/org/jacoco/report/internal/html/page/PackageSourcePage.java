@@ -61,10 +61,12 @@ public class PackageSourcePage extends TablePage<IPackageCoverage> {
 		this.sourceFilePages = new HashMap<String, ILinkable>();
 	}
 
-	@Override
+	/**
+	 * @throws IOException
+	 */
 	public void render() throws IOException {
 		renderSourceFilePages();
-		super.render();
+		super.render(getNode());
 	}
 
 	/**
@@ -80,14 +82,14 @@ public class PackageSourcePage extends TablePage<IPackageCoverage> {
 		final String packagename = getNode().getName();
 		for (final ISourceFileCoverage s : getNode().getSourceFiles()) {
 			final String sourcename = s.getName();
-			final Reader reader = locator
-					.getSourceFile(packagename, sourcename);
+			final Reader reader = locator.getSourceFile(packagename,
+					sourcename);
 			if (reader == null) {
 				addItem(new SourceFileItem(s));
 			} else {
 				final SourceFilePage sourcePage = new SourceFilePage(s, reader,
 						locator.getTabWidth(), this, folder, context);
-				sourcePage.render();
+				sourcePage.render(sourcePage.getNode());
 				sourceFilePages.put(sourcename, sourcePage);
 				addItem(sourcePage);
 			}

@@ -64,6 +64,9 @@ public class HTMLFormatter implements IHTMLReportContext {
 
 	private Table table;
 
+	private String include; // filter info for methods
+	private String exclude;
+
 	/**
 	 * New instance with default settings.
 	 */
@@ -132,14 +135,14 @@ public class HTMLFormatter implements IHTMLReportContext {
 	private Table createTable() {
 		final Table t = new Table();
 		t.add("Element", null, new LabelColumn(), false);
-		t.add("Missed Instructions", Styles.BAR, new BarColumn(CounterEntity.INSTRUCTION,
-				locale), true);
+		t.add("Missed Instructions", Styles.BAR,
+				new BarColumn(CounterEntity.INSTRUCTION, locale), true);
 		t.add("Cov.", Styles.CTR2,
 				new PercentageColumn(CounterEntity.INSTRUCTION, locale), false);
-		t.add("Missed Branches", Styles.BAR, new BarColumn(CounterEntity.BRANCH, locale),
-				false);
-		t.add("Cov.", Styles.CTR2, new PercentageColumn(CounterEntity.BRANCH, locale),
-				false);
+		t.add("Missed Branches", Styles.BAR,
+				new BarColumn(CounterEntity.BRANCH, locale), false);
+		t.add("Cov.", Styles.CTR2,
+				new PercentageColumn(CounterEntity.BRANCH, locale), false);
 		addMissedTotalColumns(t, "Cxty", CounterEntity.COMPLEXITY);
 		addMissedTotalColumns(t, "Lines", CounterEntity.LINE);
 		addMissedTotalColumns(t, "Methods", CounterEntity.METHOD);
@@ -199,13 +202,18 @@ public class HTMLFormatter implements IHTMLReportContext {
 
 			public void visitInfo(final List<SessionInfo> sessionInfos,
 					final Collection<ExecutionData> executionData)
-					throws IOException {
+							throws IOException {
 				this.sessionInfos = sessionInfos;
 				this.executionData = executionData;
 			}
 
 			public void visitBundle(final IBundleCoverage bundle,
-					final ISourceFileLocator locator) throws IOException {
+					final ISourceFileLocator locator, final String include,
+					final String exclude) throws IOException {
+				// store method filter in context for later use by class pages
+				// code not coming here when using MultiGroupVisitor
+				HTMLFormatter.this.setInclude(include);
+				HTMLFormatter.this.setExclude(exclude);
 				final BundlePage page = new BundlePage(bundle, null, locator,
 						root, HTMLFormatter.this);
 				createSessionsPage(page);
@@ -218,7 +226,6 @@ public class HTMLFormatter implements IHTMLReportContext {
 						HTMLFormatter.this, name);
 				createSessionsPage(groupHandler.getPage());
 				return groupHandler;
-
 			}
 
 			private void createSessionsPage(final ReportPage rootpage) {
@@ -230,9 +237,42 @@ public class HTMLFormatter implements IHTMLReportContext {
 				if (groupHandler != null) {
 					groupHandler.visitEnd();
 				}
-				sessionsPage.render();
+				sessionsPage.render(null);
 				output.close();
 			}
+
+			public void visitBundle(final IBundleCoverage bundle,
+					final ISourceFileLocator locator) throws IOException {
+				visitBundle(bundle, locator, null, null);
+			}
 		};
+	}
+
+	/**
+	 * @return
+	 */
+	public String getInclude() {
+		return include;
+	}
+
+	/**
+	 * @param include
+	 */
+	public void setInclude(final String include) {
+		this.include = include;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getExclude() {
+		return exclude;
+	}
+
+	/**
+	 * @param exclude
+	 */
+	public void setExclude(final String exclude) {
+		this.exclude = exclude;
 	}
 }

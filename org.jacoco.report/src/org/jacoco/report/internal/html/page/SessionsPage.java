@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.report.ILanguageNames;
@@ -81,14 +82,15 @@ public class SessionsPage extends ReportPage {
 		final ILanguageNames names = context.getLanguageNames();
 		Collections.sort(this.executionData, new Comparator<ExecutionData>() {
 			public int compare(final ExecutionData e1, final ExecutionData e2) {
-				return names.getQualifiedClassName(e1.getName()).compareTo(
-						names.getQualifiedClassName(e2.getName()));
+				return names.getQualifiedClassName(e1.getName())
+						.compareTo(names.getQualifiedClassName(e2.getName()));
 			}
 		});
 	}
 
 	@Override
-	protected void content(final HTMLElement body) throws IOException {
+	protected void content(final HTMLElement body, final ICoverageNode node)
+			throws IOException {
 		if (sessionInfos.isEmpty()) {
 			body.p().text(MSG_NO_SESSIONS);
 		} else {
@@ -132,8 +134,8 @@ public class SessionsPage extends ReportPage {
 		for (final ExecutionData e : executionData) {
 			final HTMLElement tr = tbody.tr();
 			final String link = index.getLinkToClass(e.getId());
-			final String qualifiedName = names.getQualifiedClassName(e
-					.getName());
+			final String qualifiedName = names
+					.getQualifiedClassName(e.getName());
 			if (link == null) {
 				tr.td().span(Styles.EL_CLASS).text(qualifiedName);
 			} else {

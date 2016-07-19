@@ -28,8 +28,8 @@ import org.jacoco.report.internal.html.table.ITableItem;
  * @param <NodeType>
  *            type of the node represented by this page
  */
-public abstract class TablePage<NodeType extends ICoverageNode> extends
-		NodePage<NodeType> {
+public abstract class TablePage<NodeType extends ICoverageNode>
+		extends NodePage<NodeType> {
 
 	private final List<ITableItem> items = new ArrayList<ITableItem>();
 
@@ -69,11 +69,20 @@ public abstract class TablePage<NodeType extends ICoverageNode> extends
 	}
 
 	@Override
-	protected void content(final HTMLElement body) throws IOException {
-		context.getTable().render(body, items, getNode(),
-				context.getResources(), folder);
+	protected void content(final HTMLElement body, final ICoverageNode node)
+			throws IOException {
+		context.getTable().render(body, items, node, context.getResources(),
+				folder);
 		// free memory, otherwise we will keep the complete page tree:
 		items.clear();
+	}
+
+	/**
+	 * @param body
+	 * @throws IOException
+	 */
+	protected void content(final HTMLElement body) throws IOException {
+		content(body, getNode());
 	}
 
 }

@@ -12,10 +12,14 @@
 package org.jacoco.report.internal.html.page;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.IPackageCoverage;
+import org.jacoco.core.analysis.ISourceFileCoverage;
+import org.jacoco.core.internal.analysis.PackageCoverageImpl;
 import org.jacoco.report.ISourceFileLocator;
+import org.jacoco.report.html.HTMLFormatter;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.HTMLElement;
 import org.jacoco.report.internal.html.IHTMLReportContext;
@@ -49,28 +53,74 @@ public class PackagePage extends TablePage<IPackageCoverage> {
 			final ISourceFileLocator locator, final ReportOutputFolder folder,
 			final IHTMLReportContext context) {
 		super(node, parent, folder, context);
-		packageSourcePage = new PackageSourcePage(node, parent, locator,
-				folder, context, this);
+		packageSourcePage = new PackageSourcePage(node, parent, locator, folder,
+				context, this);
 		sourceCoverageExists = !node.getSourceFiles().isEmpty();
 	}
 
-	@Override
-	public void render() throws IOException {
-		if (sourceCoverageExists) {
+	/**
+	 * @return
+	 * @throws IOException
+	 */
+	public IPackageCoverage render() throws IOException {
+		// get method filter info from report context
+		String include = null;
+		String exclude = null;
+		if (context != null
+				&& context instanceof org.jacoco.report.html.HTMLFormatter) {
+			final HTMLFormatter reportContext = (HTMLFormatter) context;
+			include = reportContext.getInclude();
+			exclude = reportContext.getExclude();
+		}
+
+		if (sourceCoverageExists && null == include && null == exclude) {
 			packageSourcePage.render();
 		}
-		renderClasses();
-		super.render();
+		final IPackageCoverage p = renderClasses(include, exclude);
+		super.render(p);
+		return p;
 	}
 
-	private void renderClasses() throws IOException {
-		for (final IClassCoverage c : getNode().getClasses()) {
-			final ILinkable sourceFilePage = packageSourcePage
-					.getSourceFilePage(c.getSourceFileName());
-			final ClassPage page = new ClassPage(c, this, sourceFilePage,
-					folder, context);
-			page.render();
-			addItem(page);
+	private IPackageCoverage renderClasses(final String include,
+			final String exclude) throws IOException {
+		final IPackageCoverage p = getNode();
+		if (include != null || exclude != null) {
+			// recalculate package coverage with filtered classes and no source
+			// file coverage
+			// Note: source file is not included because filter is not applied
+			// to source file in this implementation
+			final PackageCoverageImpl pci = new PackageCoverageImpl(p.getName(),
+					new ArrayList<IClassCoverage>(),
+					new ArrayList<ISourceFileCoverage>());
+			boolean interested = false;
+			for (final IClassCoverage c : p.getClasses()) {
+				final ILinkable sourceFilePage = packageSourcePage
+						.getSourceFilePage(c.getSourceFileName());
+				final ClassPage page = new ClassPage(c, this, sourceFilePage,
+						folder, context);
+				final IClassCoverage cc = page.render();
+				if (cc != null) {
+					addItem(new ClassPage(cc, this, sourceFilePage, folder,
+							context));
+					pci.increment(cc);
+					interested = true;
+				}
+			}
+			if (interested) {
+				return pci;
+			} else {
+				return null;
+			}
+		} else {
+			for (final IClassCoverage c : p.getClasses()) {
+				final ILinkable sourceFilePage = packageSourcePage
+						.getSourceFilePage(c.getSourceFileName());
+				final ClassPage page = new ClassPage(c, this, sourceFilePage,
+						folder, context);
+				page.render();
+				addItem(page);
+			}
+			return p;
 		}
 	}
 

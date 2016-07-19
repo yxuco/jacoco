@@ -32,23 +32,31 @@ class CSVGroupHandler implements IReportGroupVisitor {
 		this(writer, null);
 	}
 
-	private CSVGroupHandler(final ClassRowWriter writer, final String groupName) {
+	private CSVGroupHandler(final ClassRowWriter writer,
+			final String groupName) {
 		this.writer = writer;
 		this.groupName = groupName;
 	}
 
 	public void visitBundle(final IBundleCoverage bundle,
-			final ISourceFileLocator locator) throws IOException {
+			final ISourceFileLocator locator, final String include,
+			final String exclude) throws IOException {
 		final String name = appendName(bundle.getName());
 		for (final IPackageCoverage p : bundle.getPackages()) {
 			final String packageName = p.getName();
 			for (final IClassCoverage c : p.getClasses()) {
-				writer.writeRow(name, packageName, c);
+				writer.writeRow(name, packageName, c, include, exclude);
 			}
 		}
 	}
 
-	public IReportGroupVisitor visitGroup(final String name) throws IOException {
+	public void visitBundle(final IBundleCoverage bundle,
+			final ISourceFileLocator locator) throws IOException {
+		visitBundle(bundle, locator, null, null);
+	}
+
+	public IReportGroupVisitor visitGroup(final String name)
+			throws IOException {
 		return new CSVGroupHandler(writer, appendName(name));
 	}
 

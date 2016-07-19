@@ -46,10 +46,10 @@ public class SourceFilePageTest extends PageTestBase {
 				"SourceFilePageTest.java", "org/jacoco/report/internal/html");
 		final SourceFilePage page = new SourceFilePage(node, sourceReader, 4,
 				null, rootFolder, context);
-		page.render();
+		page.render(page.getNode());
 
-		final Document result = support.parse(output
-				.getFile("SourceFilePageTest.java.html"));
+		final Document result = support
+				.parse(output.getFile("SourceFilePageTest.java.html"));
 
 		// additional style sheet
 		assertEquals("jacoco-resources/report.css", support.findStr(result,

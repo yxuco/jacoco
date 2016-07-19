@@ -106,6 +106,8 @@ public class ReportTask extends Task {
 		private final SourceFilesElement sourcefiles = new SourceFilesElement();
 
 		private String name;
+		private String include;
+		private String exclude;
 
 		/**
 		 * Sets the name of the group.
@@ -115,6 +117,26 @@ public class ReportTask extends Task {
 		 */
 		public void setName(final String name) {
 			this.name = name;
+		}
+
+		/**
+		 * Sets the method pattern to be included for code coverage, default
+		 * include all methods.
+		 * 
+		 * @param include
+		 */
+		public void setInclude(final String include) {
+			this.include = include;
+		}
+
+		/**
+		 * Sets the method pattern to be excluded for code coverage, default
+		 * exclude nothing
+		 * 
+		 * @param exclude
+		 */
+		public void setExclude(final String exclude) {
+			this.exclude = exclude;
 		}
 
 		/**
@@ -344,8 +366,8 @@ public class ReportTask extends Task {
 	/**
 	 * Formatter element for coverage checks.
 	 */
-	public class CheckFormatterElement extends FormatterElement implements
-			IViolationsOutput {
+	public class CheckFormatterElement extends FormatterElement
+			implements IViolationsOutput {
 
 		private final List<Rule> rules = new ArrayList<Rule>();
 		private boolean violations = false;
@@ -397,8 +419,8 @@ public class ReportTask extends Task {
 			violations = true;
 			if (violationsPropery != null) {
 				final String old = getProject().getProperty(violationsPropery);
-				final String value = old == null ? message : String.format(
-						"%s\n%s", old, message);
+				final String value = old == null ? message
+						: String.format("%s\n%s", old, message);
 				getProject().setProperty(violationsPropery, value);
 			}
 		}
@@ -505,7 +527,8 @@ public class ReportTask extends Task {
 
 	private void loadExecutionData() {
 		final ExecFileLoader loader = new ExecFileLoader();
-		for (final Iterator<?> i = executiondataElement.iterator(); i.hasNext();) {
+		for (final Iterator<?> i = executiondataElement.iterator(); i
+				.hasNext();) {
 			final Resource resource = (Resource) i.next();
 			log(format("Loading execution data file %s", resource));
 			InputStream in = null;
@@ -513,9 +536,10 @@ public class ReportTask extends Task {
 				in = resource.getInputStream();
 				loader.load(in);
 			} catch (final IOException e) {
-				throw new BuildException(format(
-						"Unable to read execution data file %s", resource), e,
-						getLocation());
+				throw new BuildException(
+						format("Unable to read execution data file %s",
+								resource),
+						e, getLocation());
 			} finally {
 				FileUtils.close(in);
 			}
@@ -547,11 +571,16 @@ public class ReportTask extends Task {
 			if (!locator.isEmpty()) {
 				checkForMissingDebugInformation(bundle);
 			}
-			visitor.visitBundle(bundle, locator);
+			visitor.visitBundle(bundle, locator, group.include, group.exclude);
 		} else {
 			final IReportGroupVisitor groupVisitor = visitor
 					.visitGroup(group.name);
 			for (final GroupElement child : group.children) {
+				if (null == child.include && null == child.exclude) {
+					// propagate method filter down if not overridden
+					child.setInclude(group.include);
+					child.setExclude(group.exclude);
+				}
 				createReport(groupVisitor, child);
 			}
 		}

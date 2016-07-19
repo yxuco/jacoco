@@ -15,6 +15,8 @@ import java.io.IOException;
 
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.IMethodCoverage;
+import org.jacoco.core.internal.analysis.ClassCoverageImpl;
+import org.jacoco.report.html.HTMLFormatter;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.IHTMLReportContext;
 import org.jacoco.report.internal.html.ILinkable;
@@ -54,15 +56,80 @@ public class ClassPage extends TablePage<IClassCoverage> {
 		return "initialSort(['breadcrumb'])";
 	}
 
-	@Override
-	public void render() throws IOException {
-		for (final IMethodCoverage m : getNode().getMethods()) {
-			final String label = context.getLanguageNames().getMethodName(
-					getNode().getName(), m.getName(), m.getDesc(),
-					m.getSignature());
-			addItem(new MethodItem(m, label, sourcePage));
+	/**
+	 * @return
+	 * @throws IOException
+	 */
+	public IClassCoverage render() throws IOException {
+		final IClassCoverage c = getNode();
+
+		// get method filter info from report context
+		String include = null;
+		String exclude = null;
+		if (context != null
+				&& context instanceof org.jacoco.report.html.HTMLFormatter) {
+			final HTMLFormatter reportContext = (HTMLFormatter) context;
+			include = reportContext.getInclude();
+			exclude = reportContext.getExclude();
 		}
-		super.render();
+
+		final ClassCoverageImpl cci = new ClassCoverageImpl(c.getName(),
+				c.getId(), c.isNoMatch());
+		cci.setSignature(c.getSignature());
+		cci.setSourceFileName(c.getSourceFileName());
+		cci.setSuperName(c.getSuperName());
+
+		boolean interested = true;
+		if (include != null) {
+			// include the class only if it contains the included methods
+			interested = false;
+			for (final IMethodCoverage m : getNode().getMethods()) {
+				final String name = m.getName();
+				if (name.matches(include)) {
+					// included method
+					// System.out.println(
+					// String.format("HTML added method %s of class %s",
+					// name, c.getName()));
+					final String label = context.getLanguageNames()
+							.getMethodName(c.getName(), m.getName(),
+									m.getDesc(), m.getSignature());
+					addItem(new MethodItem(m, label, sourcePage));
+					cci.addMethod(m); // this recalculates total in cci
+					interested = true;
+				} else {
+					// System.out.println(String.format(
+					// "HTML ignored method %s not matching %s in class %s",
+					// name, include, c.getName()));
+				}
+			}
+		} else {
+			interested = false;
+			for (final IMethodCoverage m : getNode().getMethods()) {
+				final String name = m.getName();
+				if (exclude != null && name.matches(exclude)) {
+					// excluded method
+					// System.out.println(String.format(
+					// "HTML ignored method %s matching %s in class %s",
+					// name, exclude, c.getName()));
+				} else {
+					// System.out.println(
+					// String.format("HTML added method %s of class %s",
+					// name, c.getName()));
+					final String label = context.getLanguageNames()
+							.getMethodName(c.getName(), m.getName(),
+									m.getDesc(), m.getSignature());
+					addItem(new MethodItem(m, label, sourcePage));
+					cci.addMethod(m); // this recalculates total in cci
+					interested = true;
+				}
+			}
+		}
+		if (interested) {
+			super.render(cci);
+			return cci;
+		} else {
+			return null;
+		}
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.report.internal.html.HTMLElement;
@@ -71,9 +72,9 @@ public class SessionsPageTest extends PageTestBase {
 	public void testEmptyContent() throws Exception {
 		final SessionsPage page = new SessionsPage(noSessions, noExecutionData,
 				index, null, rootFolder, context);
-		page.render();
-		final Document doc = support.parse(output
-				.getFile("jacoco-sessions.html"));
+		page.render(null);
+		final Document doc = support
+				.parse(output.getFile("jacoco-sessions.html"));
 		assertEquals("No session information available.",
 				support.findStr(doc, "/html/body/p[1]"));
 		assertEquals("No execution data available.",
@@ -88,9 +89,9 @@ public class SessionsPageTest extends PageTestBase {
 		sessions.add(new SessionInfo("Session-C", 0, 0));
 		final SessionsPage page = new SessionsPage(sessions, noExecutionData,
 				index, null, rootFolder, context);
-		page.render();
-		final Document doc = support.parse(output
-				.getFile("jacoco-sessions.html"));
+		page.render(null);
+		final Document doc = support
+				.parse(output.getFile("jacoco-sessions.html"));
 		assertEquals("el_session", support.findStr(doc,
 				"/html/body/table[1]/tbody/tr[1]/td[1]/span/@class"));
 		assertEquals("Session-A", support.findStr(doc,
@@ -123,21 +124,22 @@ public class SessionsPageTest extends PageTestBase {
 			}
 
 			@Override
-			protected void content(HTMLElement body) throws IOException {
+			protected void content(HTMLElement body, ICoverageNode node)
+					throws IOException {
 			}
 		}, 0x1002);
 
 		final SessionsPage page = new SessionsPage(noSessions, data, index,
 				null, rootFolder, context);
-		page.render();
-		final Document doc = support.parse(output
-				.getFile("jacoco-sessions.html"));
+		page.render(null);
+		final Document doc = support
+				.parse(output.getFile("jacoco-sessions.html"));
 		assertEquals("el_class", support.findStr(doc,
 				"/html/body/table[1]/tbody/tr[1]/td[1]/a/@class"));
 		assertEquals("Foo.html", support.findStr(doc,
 				"/html/body/table[1]/tbody/tr[1]/td[1]/a/@href"));
-		assertEquals("ClassA",
-				support.findStr(doc, "/html/body/table[1]/tbody/tr[1]/td[1]/a"));
+		assertEquals("ClassA", support.findStr(doc,
+				"/html/body/table[1]/tbody/tr[1]/td[1]/a"));
 		assertEquals("0000000000001002", support.findStr(doc,
 				"/html/body/table[1]/tbody/tr[1]/td[2]/code"));
 		assertEquals("ClassB",

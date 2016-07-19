@@ -33,8 +33,8 @@ import org.junit.Test;
  */
 public class MultiReportVisitorTest {
 
-	private static class MockVisitor extends MockGroupVisitor implements
-			IReportVisitor {
+	private static class MockVisitor extends MockGroupVisitor
+			implements IReportVisitor {
 
 		MockVisitor() {
 			super("Report");
@@ -73,8 +73,14 @@ public class MultiReportVisitorTest {
 		}
 
 		public void visitBundle(IBundleCoverage bundle,
-				ISourceFileLocator locator) throws IOException {
+				ISourceFileLocator locator, String include, String exclude)
+						throws IOException {
 			children.add(new MockGroupVisitor(bundle.getName()));
+		}
+
+		public void visitBundle(IBundleCoverage bundle,
+				ISourceFileLocator locator) throws IOException {
+			visitBundle(bundle, locator, null, null);
 		}
 
 		public IReportGroupVisitor visitGroup(String name) throws IOException {

@@ -81,13 +81,19 @@ public class RulesChecker {
 			}
 
 			public void visitBundle(final IBundleCoverage bundle,
-					final ISourceFileLocator locator) throws IOException {
+					final ISourceFileLocator locator, final String include,
+					final String exclude) throws IOException {
 				bundleChecker.checkBundle(bundle);
+			}
+
+			public void visitBundle(final IBundleCoverage bundle,
+					final ISourceFileLocator locator) throws IOException {
+				visitBundle(bundle, locator, null, null);
 			}
 
 			public void visitInfo(final List<SessionInfo> sessionInfos,
 					final Collection<ExecutionData> executionData)
-					throws IOException {
+							throws IOException {
 			}
 
 			public void visitEnd() throws IOException {

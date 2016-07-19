@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.HTMLElement;
 import org.jacoco.report.internal.html.HTMLSupport;
@@ -38,14 +39,16 @@ public class ReportPageTest extends PageTestBase {
 		private final String label;
 		private final String style;
 
-		protected TestReportPage(String label, String style, ReportPage parent) {
+		protected TestReportPage(String label, String style,
+				ReportPage parent) {
 			super(parent, rootFolder, ReportPageTest.this.context);
 			this.label = label;
 			this.style = style;
 		}
 
 		@Override
-		protected void content(HTMLElement body) throws IOException {
+		protected void content(HTMLElement body, ICoverageNode node)
+				throws IOException {
 			body.div("testcontent").text("Hello Test");
 		}
 
@@ -90,7 +93,7 @@ public class ReportPageTest extends PageTestBase {
 
 	@Test
 	public void testPageContent() throws Exception {
-		page.render();
+		page.render(null);
 		final HTMLSupport support = new HTMLSupport();
 		final Document doc = support.parse(output.getFile("Test.html"));
 

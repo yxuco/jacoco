@@ -21,7 +21,8 @@ import org.jacoco.core.analysis.IBundleCoverage;
  * "deep first" fashion. The interface is implemented by the report formatters
  * and can be used to emit coverage report structures.
  * 
- * The following constraints apply in using {@link IReportGroupVisitor} instances:
+ * The following constraints apply in using {@link IReportGroupVisitor}
+ * instances:
  * 
  * <ul>
  * <li>A visitor instance can be used to either submit bundles (
@@ -41,8 +42,18 @@ public interface IReportGroupVisitor {
 	 *            a bundle to include in the report
 	 * @param locator
 	 *            source locator for this bundle
+	 * @param include
+	 * @param exclude
 	 * @throws IOException
 	 *             in case of IO problems with the report writer
+	 */
+	void visitBundle(IBundleCoverage bundle, ISourceFileLocator locator,
+			String include, String exclude) throws IOException;
+
+	/**
+	 * @param bundle
+	 * @param locator
+	 * @throws IOException
 	 */
 	void visitBundle(IBundleCoverage bundle, ISourceFileLocator locator)
 			throws IOException;
@@ -55,10 +66,14 @@ public interface IReportGroupVisitor {
 	 * 
 	 * @param name
 	 *            name of the group
+	 * @param include
+	 *            name pattern of methods included for code coverage
+	 * @param exclude
+	 *            name pattern of methods excluded for code coverage
+	 * 
 	 * @return visitor for the group's content
 	 * @throws IOException
 	 *             in case of IO problems with the report writer
 	 */
 	IReportGroupVisitor visitGroup(String name) throws IOException;
-
 }

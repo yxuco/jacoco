@@ -16,6 +16,7 @@ import java.io.IOException;
 import org.jacoco.core.analysis.IBundleCoverage;
 import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.report.ISourceFileLocator;
+import org.jacoco.report.html.HTMLFormatter;
 import org.jacoco.report.internal.AbstractGroupVisitor;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.page.BundlePage;
@@ -65,12 +66,25 @@ public class HTMLGroupVisitor extends AbstractGroupVisitor {
 	}
 
 	@Override
-	protected void handleBundle(final IBundleCoverage bundle,
-			final ISourceFileLocator locator) throws IOException {
+	protected IBundleCoverage handleBundle(final IBundleCoverage bundle,
+			final ISourceFileLocator locator, final String include,
+			final String exclude) throws IOException {
 		final BundlePage bundlepage = new BundlePage(bundle, page, locator,
 				folder.subFolder(bundle.getName()), context);
-		bundlepage.render();
-		page.addItem(bundlepage);
+
+		// this is called by MultiReportVisitor, so save filter in context for
+		// use by report
+		if (context != null
+				&& context instanceof org.jacoco.report.html.HTMLFormatter) {
+			final HTMLFormatter reportContext = (HTMLFormatter) context;
+			reportContext.setInclude(include);
+			reportContext.setExclude(exclude);
+		}
+
+		final IBundleCoverage b = bundlepage.render();
+		page.addItem(new BundlePage(b, page, locator,
+				folder.subFolder(bundle.getName()), context));
+		return b;
 	}
 
 	@Override
@@ -84,7 +98,7 @@ public class HTMLGroupVisitor extends AbstractGroupVisitor {
 
 	@Override
 	protected void handleEnd() throws IOException {
-		page.render();
+		page.render(page.getNode());
 	}
 
 }

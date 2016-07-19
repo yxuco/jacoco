@@ -14,6 +14,7 @@ package org.jacoco.report.internal.html.page;
 import java.io.IOException;
 
 import org.jacoco.core.JaCoCo;
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.HTMLDocument;
 import org.jacoco.report.internal.html.HTMLElement;
@@ -67,15 +68,17 @@ public abstract class ReportPage implements ILinkable {
 	 * Renders this page's content and optionally additional pages. This method
 	 * must be called at most once.
 	 * 
+	 * @param node
+	 * 
 	 * @throws IOException
 	 *             if the page can't be written
 	 */
-	public void render() throws IOException {
+	public void render(final ICoverageNode node) throws IOException {
 		final HTMLDocument doc = new HTMLDocument(
 				folder.createFile(getFileName()), context.getOutputEncoding());
 		doc.attr("lang", context.getLocale().getLanguage());
 		head(doc.head());
-		body(doc.body());
+		body(doc.body(), node);
 		doc.close();
 	}
 
@@ -98,14 +101,15 @@ public abstract class ReportPage implements ILinkable {
 		head.title().text(getLinkLabel());
 	}
 
-	private void body(final HTMLElement body) throws IOException {
+	private void body(final HTMLElement body, final ICoverageNode node)
+			throws IOException {
 		body.attr("onload", getOnload());
 		final HTMLElement navigation = body.div(Styles.BREADCRUMB);
 		navigation.attr("id", "breadcrumb");
 		infoLinks(navigation.span(Styles.INFO));
 		breadcrumb(navigation, folder);
 		body.h1().text(getLinkLabel());
-		content(body);
+		content(body, node);
 		footer(body);
 	}
 
@@ -130,15 +134,15 @@ public abstract class ReportPage implements ILinkable {
 		span.a(context.getSessionsPage(), folder);
 	}
 
-	private void breadcrumb(final HTMLElement div, final ReportOutputFolder base)
-			throws IOException {
+	private void breadcrumb(final HTMLElement div,
+			final ReportOutputFolder base) throws IOException {
 		breadcrumbParent(parent, div, base);
 		div.span(getLinkStyle()).text(getLinkLabel());
 	}
 
 	private static void breadcrumbParent(final ReportPage page,
 			final HTMLElement div, final ReportOutputFolder base)
-			throws IOException {
+					throws IOException {
 		if (page != null) {
 			breadcrumbParent(page.parent, div, base);
 			div.a(page, base);
@@ -167,10 +171,12 @@ public abstract class ReportPage implements ILinkable {
 	 * 
 	 * @param body
 	 *            body tag of the page
+	 * @param node
 	 * @throws IOException
 	 *             in case of IO problems with the report writer
 	 */
-	protected abstract void content(final HTMLElement body) throws IOException;
+	protected abstract void content(final HTMLElement body, ICoverageNode node)
+			throws IOException;
 
 	// === ILinkable ===
 

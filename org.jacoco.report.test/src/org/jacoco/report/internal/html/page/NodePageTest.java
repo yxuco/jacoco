@@ -39,7 +39,8 @@ public class NodePageTest extends PageTestBase {
 		}
 
 		@Override
-		protected void content(HTMLElement body) throws IOException {
+		protected void content(HTMLElement body, ICoverageNode node)
+				throws IOException {
 		}
 
 		@Override

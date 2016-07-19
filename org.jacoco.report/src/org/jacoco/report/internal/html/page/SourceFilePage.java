@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.io.Reader;
 
+import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.analysis.ISourceNode;
 import org.jacoco.report.internal.ReportOutputFolder;
 import org.jacoco.report.internal.html.HTMLElement;
@@ -57,8 +58,13 @@ public class SourceFilePage extends NodePage<ISourceNode> {
 		this.tabWidth = tabWidth;
 	}
 
+	/**
+	 * @param body
+	 * @throws IOException
+	 */
 	@Override
-	protected void content(final HTMLElement body) throws IOException {
+	protected void content(final HTMLElement body, final ICoverageNode node)
+			throws IOException {
 		final SourceHighlighter hl = new SourceHighlighter(context.getLocale());
 		hl.render(body, getNode(), sourceReader);
 		sourceReader.close();
@@ -67,14 +73,10 @@ public class SourceFilePage extends NodePage<ISourceNode> {
 	@Override
 	protected void head(final HTMLElement head) throws IOException {
 		super.head(head);
-		head.link(
-				"stylesheet",
-				context.getResources().getLink(folder,
-						Resources.PRETTIFY_STYLESHEET), "text/css");
-		head.script(
-				"text/javascript",
-				context.getResources().getLink(folder,
-						Resources.PRETTIFY_SCRIPT));
+		head.link("stylesheet", context.getResources().getLink(folder,
+				Resources.PRETTIFY_STYLESHEET), "text/css");
+		head.script("text/javascript", context.getResources().getLink(folder,
+				Resources.PRETTIFY_SCRIPT));
 	}
 
 	@Override
