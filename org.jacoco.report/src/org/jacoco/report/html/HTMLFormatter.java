@@ -216,7 +216,9 @@ public class HTMLFormatter implements IHTMLReportContext {
 				HTMLFormatter.this.setExclude(exclude);
 				final BundlePage page = new BundlePage(bundle, null, locator,
 						root, HTMLFormatter.this);
-				createSessionsPage(page);
+				if (executionData != null) {
+					createSessionsPage(page);
+				}
 				page.render();
 			}
 
@@ -224,7 +226,9 @@ public class HTMLFormatter implements IHTMLReportContext {
 					throws IOException {
 				groupHandler = new HTMLGroupVisitor(null, root,
 						HTMLFormatter.this, name);
-				createSessionsPage(groupHandler.getPage());
+				if (sessionInfos != null) {
+					createSessionsPage(groupHandler.getPage());
+				}
 				return groupHandler;
 			}
 
@@ -237,7 +241,9 @@ public class HTMLFormatter implements IHTMLReportContext {
 				if (groupHandler != null) {
 					groupHandler.visitEnd();
 				}
-				sessionsPage.render(null);
+				if (sessionsPage != null) {
+					sessionsPage.render(null);
+				}
 				output.close();
 			}
 

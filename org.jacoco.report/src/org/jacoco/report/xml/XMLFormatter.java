@@ -94,11 +94,14 @@ public class XMLFormatter {
 
 			private void writeHeader(final String name) throws IOException {
 				element.attr("name", name);
-				for (final SessionInfo i : sessionInfos) {
-					final XMLElement sessioninfo = root.element("sessioninfo");
-					sessioninfo.attr("id", i.getId());
-					sessioninfo.attr("start", i.getStartTimeStamp());
-					sessioninfo.attr("dump", i.getDumpTimeStamp());
+				if (sessionInfos != null) {
+					for (final SessionInfo i : sessionInfos) {
+						final XMLElement sessioninfo = root
+								.element("sessioninfo");
+						sessioninfo.attr("id", i.getId());
+						sessioninfo.attr("start", i.getStartTimeStamp());
+						sessioninfo.attr("dump", i.getDumpTimeStamp());
+					}
 				}
 			}
 

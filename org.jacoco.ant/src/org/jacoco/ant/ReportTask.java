@@ -53,6 +53,9 @@ import org.jacoco.report.csv.CSVFormatter;
 import org.jacoco.report.html.HTMLFormatter;
 import org.jacoco.report.xml.XMLFormatter;
 
+import com.tibco.psg.codecoverage.bw.ProcessArchiveStat;
+import com.tibco.psg.codecoverage.bw.StatusCollector;
+
 /**
  * Task for coverage report generation.
  */
@@ -509,19 +512,65 @@ public class ReportTask extends Task {
 
 	@Override
 	public void execute() throws BuildException {
-		loadExecutionData();
-		try {
-			final IReportVisitor visitor = createVisitor();
-			visitor.visitInfo(sessionInfoStore.getInfos(),
-					executionDataStore.getContents());
-			createReport(visitor, structure);
-			visitor.visitEnd();
-			for (final FormatterElement f : formatters) {
-				f.finish();
+		if (!businessworks.isEmpty()) {
+			try {
+				final IReportVisitor visitor = createVisitor();
+				final IReportGroupVisitor groupVisitor = visitor
+						.visitGroup("BusinessWorks");
+				for (final BusinessWorksElement bw : businessworks) {
+					try {
+						final String[] tokens = bw.getJmxurl().split(":");
+						final StatusCollector collector = new StatusCollector(
+								tokens[0], tokens[1]);
+						final List<ProcessArchiveStat> stats = collector
+								.collectStats();
+						collector.closeConnection();
+
+						// // Test only
+						// final List<ProcessArchiveStat> stats =
+						// StatusCollector
+						// .readStats(
+						// "/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat");
+						// final StatusCollector collector = new
+						// StatusCollector();
+
+						final IBundleCoverage bundle = collector
+								.toCoverageNode(bw.getName(), stats);
+						final AntResourcesLocator locator = new AntResourcesLocator(
+								"UTF-8", 3);
+						groupVisitor.visitBundle(bundle, locator, null, null);
+					} catch (final Exception ex) {
+						ex.printStackTrace();
+						throw new BuildException(
+								"Error while creating report for BW @"
+										+ bw.getJmxurl(),
+								ex, getLocation());
+					}
+				}
+				visitor.visitEnd();
+				for (final FormatterElement f : formatters) {
+					f.finish();
+				}
+			} catch (final Exception e) {
+				e.printStackTrace();
+				throw new BuildException("Error while creating report for BW",
+						e, getLocation());
 			}
-		} catch (final IOException e) {
-			throw new BuildException("Error while creating report", e,
-					getLocation());
+		} else {
+			loadExecutionData();
+			try {
+				final IReportVisitor visitor = createVisitor();
+				visitor.visitInfo(sessionInfoStore.getInfos(),
+						executionDataStore.getContents());
+				createReport(visitor, structure);
+				visitor.visitEnd();
+				for (final FormatterElement f : formatters) {
+					f.finish();
+				}
+			} catch (final IOException e) {
+				throw new BuildException("Error while creating report", e,
+						getLocation());
+			}
 		}
 	}
 
@@ -647,4 +696,60 @@ public class ReportTask extends Task {
 		return new Locale(language, country, variant);
 	}
 
+	List<BusinessWorksElement> businessworks = new ArrayList<BusinessWorksElement>();
+
+	/**
+	 * create a new businessworks element
+	 * 
+	 * @return businessworks element
+	 */
+	public BusinessWorksElement createBusinessworks() {
+		final BusinessWorksElement bw = new BusinessWorksElement();
+		businessworks.add(bw);
+		return bw;
+	}
+
+	/**
+	 * Data Element containing JMX connection info of a BusinessWorks process
+	 *
+	 */
+	public class BusinessWorksElement {
+		/**
+		 * @return name of the BW process
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * set BW process name
+		 * 
+		 * @param name
+		 *            BW process name
+		 */
+		public void setName(final String name) {
+			this.name = name;
+		}
+
+		/**
+		 * @return JMX host:port to fetch BW process status
+		 */
+		public String getJmxurl() {
+			return jmxurl;
+		}
+
+		/**
+		 * set JMX host:port for the BW process
+		 * 
+		 * @param jmxurl
+		 *            JMX host:port
+		 */
+		public void setJmxurl(final String jmxurl) {
+			this.jmxurl = jmxurl;
+		}
+
+		String name;
+		String jmxurl;
+
+	}
 }

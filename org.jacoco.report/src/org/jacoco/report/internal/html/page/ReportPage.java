@@ -107,7 +107,9 @@ public abstract class ReportPage implements ILinkable {
 		body.attr("onload", getOnload());
 		final HTMLElement navigation = body.div(Styles.BREADCRUMB);
 		navigation.attr("id", "breadcrumb");
-		infoLinks(navigation.span(Styles.INFO));
+		if (context.getSessionsPage() != null) {
+			infoLinks(navigation.span(Styles.INFO));
+		}
 		breadcrumb(navigation, folder);
 		body.h1().text(getLinkLabel());
 		content(body, node);
