@@ -61,6 +61,17 @@ public class ActivityStat implements Serializable {
 	}
 
 	/**
+	 * add counts from a specified ActivityStat
+	 * 
+	 * @param stat
+	 *            counts to be added
+	 */
+	public void mergeStat(final ActivityStat stat) {
+		this.executionCount += stat.executionCount;
+		this.executionSinceReset += stat.executionSinceReset;
+	}
+
+	/**
 	 * Construct Coverage Node as equivalent Java method based on
 	 * execution-since-reset
 	 * 

@@ -53,7 +53,24 @@ public class ProcessArchiveStat implements Serializable {
 	 *            the BW process stat to be added
 	 */
 	public void addProcessStat(final ProcessStat pStat) {
-		processes.put(pStat.processName, pStat);
+		final ProcessStat myProcess = processes.get(pStat.processName);
+		if (null == myProcess) {
+			processes.put(pStat.processName, pStat);
+		} else {
+			myProcess.mergeStat(pStat);
+		}
+	}
+
+	/**
+	 * add counts from a specified ProcessArchiveStat
+	 * 
+	 * @param stat
+	 *            counts to be added
+	 */
+	public void mergeStat(final ProcessArchiveStat stat) {
+		for (final ProcessStat process : stat.processes.values()) {
+			addProcessStat(process);
+		}
 	}
 
 	/**

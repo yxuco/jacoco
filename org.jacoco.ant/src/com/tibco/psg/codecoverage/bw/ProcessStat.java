@@ -63,7 +63,26 @@ public class ProcessStat implements Serializable {
 	 */
 	public void addActivity(final ActivityStat aStat) {
 		if (aStat != null) {
-			activities.put(aStat.activityName, aStat);
+			final ActivityStat myActivity = activities.get(aStat.activityName);
+			if (null == myActivity) {
+				activities.put(aStat.activityName, aStat);
+			} else {
+				myActivity.mergeStat(aStat);
+			}
+		}
+	}
+
+	/**
+	 * add counts from a specified ProcessStat
+	 * 
+	 * @param stat
+	 *            counts to be added
+	 */
+	public void mergeStat(final ProcessStat stat) {
+		this.executionCount += stat.executionCount;
+		this.executionSinceReset += stat.executionSinceReset;
+		for (final ActivityStat activity : stat.activities.values()) {
+			addActivity(activity);
 		}
 	}
 

@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -53,7 +54,7 @@ import org.jacoco.report.csv.CSVFormatter;
 import org.jacoco.report.html.HTMLFormatter;
 import org.jacoco.report.xml.XMLFormatter;
 
-import com.tibco.psg.codecoverage.bw.ProcessArchiveStat;
+import com.tibco.psg.codecoverage.bw.BWApplicationStat;
 import com.tibco.psg.codecoverage.bw.StatusCollector;
 
 /**
@@ -510,43 +511,47 @@ public class ReportTask extends Task {
 		return element;
 	}
 
+	private void createBWReport(final IReportVisitor visitor)
+			throws BuildException, IOException {
+		final TreeMap<String, BWApplicationStat> stats = new TreeMap<String, BWApplicationStat>();
+		for (final BusinessWorksElement bw : businessworks) {
+			try {
+				final String[] tokens = bw.getJmxurl().split(":");
+				final StatusCollector collector = new StatusCollector(tokens[0],
+						tokens[1]);
+				final BWApplicationStat bwStat = collector
+						.collectStats(bw.getName());
+				collector.closeConnection();
+
+				final BWApplicationStat prevStat = stats.get(bw.getName());
+				if (null == prevStat) {
+					stats.put(bw.getName(), bwStat);
+				} else {
+					prevStat.mergeStat(bwStat);
+				}
+			} catch (final Exception ex) {
+				ex.printStackTrace();
+				throw new BuildException(
+						"Error while creating report for BW @" + bw.getJmxurl(),
+						ex, getLocation());
+			}
+		}
+		final IReportGroupVisitor groupVisitor = visitor
+				.visitGroup("BusinessWorks");
+		for (final BWApplicationStat stat : stats.values()) {
+			final IBundleCoverage bundle = stat.toCoverageNode();
+			final AntResourcesLocator locator = new AntResourcesLocator("UTF-8",
+					3);
+			groupVisitor.visitBundle(bundle, locator, null, null);
+		}
+	}
+
 	@Override
 	public void execute() throws BuildException {
 		if (!businessworks.isEmpty()) {
 			try {
 				final IReportVisitor visitor = createVisitor();
-				final IReportGroupVisitor groupVisitor = visitor
-						.visitGroup("BusinessWorks");
-				for (final BusinessWorksElement bw : businessworks) {
-					try {
-						final String[] tokens = bw.getJmxurl().split(":");
-						final StatusCollector collector = new StatusCollector(
-								tokens[0], tokens[1]);
-						final List<ProcessArchiveStat> stats = collector
-								.collectStats();
-						collector.closeConnection();
-
-						// // Test only
-						// final List<ProcessArchiveStat> stats =
-						// StatusCollector
-						// .readStats(
-						// "/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat");
-						// final StatusCollector collector = new
-						// StatusCollector();
-
-						final IBundleCoverage bundle = collector
-								.toCoverageNode(bw.getName(), stats);
-						final AntResourcesLocator locator = new AntResourcesLocator(
-								"UTF-8", 3);
-						groupVisitor.visitBundle(bundle, locator, null, null);
-					} catch (final Exception ex) {
-						ex.printStackTrace();
-						throw new BuildException(
-								"Error while creating report for BW @"
-										+ bw.getJmxurl(),
-								ex, getLocation());
-					}
-				}
+				createBWReport(visitor);
 				visitor.visitEnd();
 				for (final FormatterElement f : formatters) {
 					f.finish();

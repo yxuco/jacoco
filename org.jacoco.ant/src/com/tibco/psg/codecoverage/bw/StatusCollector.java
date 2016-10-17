@@ -31,9 +31,6 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.jacoco.core.analysis.IBundleCoverage;
-import org.jacoco.core.analysis.IClassCoverage;
-import org.jacoco.core.analysis.ISourceFileCoverage;
-import org.jacoco.core.internal.analysis.BundleCoverageImpl;
 
 /**
  * Collect BW activity status via JMX
@@ -43,12 +40,6 @@ import org.jacoco.core.internal.analysis.BundleCoverageImpl;
 public class StatusCollector {
 	JMXConnector jmxc = null;
 	MBeanServerConnection mbsc = null;
-
-	/**
-	 * Default constructor for testing
-	 */
-	public StatusCollector() {
-	}
 
 	/**
 	 * Construct BW status collector assuming JMX authentication is not used
@@ -99,19 +90,22 @@ public class StatusCollector {
 	/**
 	 * Invoke MBeans to collect BW application stats
 	 * 
+	 * @param appName
+	 *            name of the application
+	 * 
 	 * @return the resulting stats
 	 * @throws Exception
 	 *             if failed to invoke MBeans
 	 */
-	public List<ProcessArchiveStat> collectStats() throws Exception {
-		final ArrayList<ProcessArchiveStat> stats = new ArrayList<ProcessArchiveStat>();
+	public BWApplicationStat collectStats(final String appName)
+			throws Exception {
+		final BWApplicationStat stats = new BWApplicationStat(appName);
 		final Set<ObjectName> mbeans = mbsc.queryNames(
 				new ObjectName("com.tibco.bw:key=engine,name=*"), null);
 		for (final ObjectName mbean : mbeans) {
 			final String archiveName = mbean.getKeyProperty("name");
 			final ProcessArchiveStat arStat = new ProcessArchiveStat(
 					archiveName);
-			stats.add(arStat);
 
 			// get processes
 			final List<ProcessStat> processes = invokeGetProcesseDefinitions(
@@ -119,29 +113,9 @@ public class StatusCollector {
 			for (final ProcessStat p : processes) {
 				arStat.addProcessStat(p);
 			}
+			stats.addArchiveStat(arStat);
 		}
 		return stats;
-	}
-
-	/**
-	 * Construct coverage node of a set of BW process archives
-	 * 
-	 * @param name
-	 *            name of the archive bundle
-	 * @param stats
-	 *            stats of BW process archives
-	 * @return coverage node for code coverage report
-	 */
-	public IBundleCoverage toCoverageNode(final String name,
-			final List<ProcessArchiveStat> stats) {
-		final ArrayList<IClassCoverage> classes = new ArrayList<IClassCoverage>();
-		for (final ProcessArchiveStat paStat : stats) {
-			for (final ProcessStat p : paStat.getProcesses()) {
-				classes.add(p.toCoverageNode());
-			}
-		}
-		return new BundleCoverageImpl(name, classes,
-				new ArrayList<ISourceFileCoverage>());
 	}
 
 	@SuppressWarnings("boxing")
@@ -238,11 +212,10 @@ public class StatusCollector {
 	 */
 	public static void main(final String[] args) throws Exception {
 		org.objectweb.asm.Type.getArgumentTypes("(L;)");
-		final List<ProcessArchiveStat> stats = readStats(
+		final BWApplicationStat stats = readStats(
 				"/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat");
-		System.out.println("read stats " + stats.size());
-		final StatusCollector collector = new StatusCollector();
-		final IBundleCoverage coverage = collector.toCoverageNode("BW", stats);
+		System.out.println("read stats " + stats.archives.size());
+		final IBundleCoverage coverage = stats.toCoverageNode();
 		System.out.println("packages " + coverage.getPackages().size()
 				+ " method coverage "
 				+ coverage.getMethodCounter().getCoveredCount()
@@ -254,17 +227,18 @@ public class StatusCollector {
 	private static void testCollectStats() throws Exception {
 		final String host = "vrh00913.ute.fedex.com";
 		final String port = "27012";
+		final String appName = "BW";
 
 		// collect BW stats
 		final StatusCollector collector = new StatusCollector(host, port);
-		List<ProcessArchiveStat> stats = collector.collectStats();
+		BWApplicationStat stats = collector.collectStats(appName);
 		collector.closeConnection();
 
 		// test storage
 		final String storeFile = "/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat";
 		writeStats(stats, storeFile);
 		stats = readStats(storeFile);
-		for (final ProcessArchiveStat arStat : stats) {
+		for (final ProcessArchiveStat arStat : stats.archives.values()) {
 			System.out.println("archive: " + arStat.archiveName);
 			for (final ProcessStat pStat : arStat.processes.values()) {
 				System.out.println("Process: " + pStat.processName + " count: "
@@ -286,21 +260,20 @@ public class StatusCollector {
 	 * @throws Exception
 	 *             if failed to read data file
 	 */
-	@SuppressWarnings("unchecked")
-	public static List<ProcessArchiveStat> readStats(final String dataFile)
+	public static BWApplicationStat readStats(final String dataFile)
 			throws Exception {
-		List<ProcessArchiveStat> stats = null;
+		BWApplicationStat stats = null;
 		final File storeFile = new File(dataFile);
 		if (storeFile.exists()) {
 			final ObjectInputStream is = new ObjectInputStream(
 					new FileInputStream(storeFile));
-			stats = (List<ProcessArchiveStat>) is.readObject();
+			stats = (BWApplicationStat) is.readObject();
 			is.close();
 		}
 		return stats;
 	}
 
-	private static void writeStats(final List<ProcessArchiveStat> stats,
+	private static void writeStats(final BWApplicationStat stats,
 			final String dataFile) throws IOException {
 		// clean up old store file
 		final File storeFile = new File(dataFile);
