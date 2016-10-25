@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
@@ -103,17 +104,12 @@ public class StatusCollector {
 		final Set<ObjectName> mbeans = mbsc.queryNames(
 				new ObjectName("com.tibco.bw:key=engine,name=*"), null);
 		for (final ObjectName mbean : mbeans) {
-			final String archiveName = mbean.getKeyProperty("name");
-			final ProcessArchiveStat arStat = new ProcessArchiveStat(
-					archiveName);
-
 			// get processes
 			final List<ProcessStat> processes = invokeGetProcesseDefinitions(
 					mbsc, mbean);
 			for (final ProcessStat p : processes) {
-				arStat.addProcessStat(p);
+				stats.addProcessStat(p);
 			}
-			stats.addArchiveStat(arStat);
 		}
 		return stats;
 	}
@@ -144,21 +140,29 @@ public class StatusCollector {
 			}
 
 			// reset stats
-			resetStats(mbsc, mbean, name);
+			if (executionCount > 0) {
+				resetStats(mbsc, mbean, name);
+			}
 		}
 		return stats;
 	}
 
 	private void resetStats(final MBeanServerConnection mbsc,
 			final ObjectName mbean, final String processName) throws Exception {
-		// reset the process stats
-		mbsc.invoke(mbean, "ResetProcessDefinitionStats",
-				new Object[] { processName },
-				new String[] { String.class.getName() });
+		try {
+			// reset the process stats
+			mbsc.invoke(mbean, "ResetProcessDefinitionStats",
+					new Object[] { processName },
+					new String[] { String.class.getName() });
 
-		// reset activity stats
-		mbsc.invoke(mbean, "ResetActivityStats", new Object[] { processName },
-				new String[] { String.class.getName() });
+			// reset activity stats
+			mbsc.invoke(mbean, "ResetActivityStats",
+					new Object[] { processName },
+					new String[] { String.class.getName() });
+		} catch (final MBeanException e) {
+			System.out.println(
+					"Failed to reset stats for process " + processName);
+		}
 	}
 
 	@SuppressWarnings("boxing")
@@ -214,7 +218,7 @@ public class StatusCollector {
 		org.objectweb.asm.Type.getArgumentTypes("(L;)");
 		final BWApplicationStat stats = readStats(
 				"/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat");
-		System.out.println("read stats " + stats.archives.size());
+		System.out.println("read stats " + stats.processes.size());
 		final IBundleCoverage coverage = stats.toCoverageNode();
 		System.out.println("packages " + coverage.getPackages().size()
 				+ " method coverage "
@@ -238,15 +242,12 @@ public class StatusCollector {
 		final String storeFile = "/Users/yxu/Developer/tibco/test_tutorial/jacoco/bw/bwstats.dat";
 		writeStats(stats, storeFile);
 		stats = readStats(storeFile);
-		for (final ProcessArchiveStat arStat : stats.archives.values()) {
-			System.out.println("archive: " + arStat.archiveName);
-			for (final ProcessStat pStat : arStat.processes.values()) {
-				System.out.println("Process: " + pStat.processName + " count: "
-						+ pStat.executionSinceReset);
-				for (final ActivityStat aStat : pStat.activities.values()) {
-					System.out.println("Activity: " + aStat.activityName
-							+ " count: " + aStat.executionSinceReset);
-				}
+		for (final ProcessStat pStat : stats.processes.values()) {
+			System.out.println("Process: " + pStat.processName + " count: "
+					+ pStat.executionSinceReset);
+			for (final ActivityStat aStat : pStat.activities.values()) {
+				System.out.println("Activity: " + aStat.activityName
+						+ " count: " + aStat.executionSinceReset);
 			}
 		}
 	}

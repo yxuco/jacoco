@@ -33,8 +33,7 @@ public class BWApplicationStat implements Serializable {
 	 */
 	private static final long serialVersionUID = 5950602439010061129L;
 	String appName;
-	TreeMap<String, ProcessArchiveStat> archives; // archiveName ->
-													// ProcessArchiveStat
+	TreeMap<String, ProcessStat> processes; // processName -> ProcessStat
 
 	/**
 	 * construct a BW application stat
@@ -44,21 +43,21 @@ public class BWApplicationStat implements Serializable {
 	 */
 	public BWApplicationStat(final String appName) {
 		this.appName = appName;
-		this.archives = new TreeMap<String, ProcessArchiveStat>();
+		this.processes = new TreeMap<String, ProcessStat>();
 	}
 
 	/**
-	 * add archive to application stat
+	 * Add stat of a BW process to the archive
 	 * 
-	 * @param stat
-	 *            process archive stat
+	 * @param pStat
+	 *            the BW process stat to be added
 	 */
-	public void addArchiveStat(final ProcessArchiveStat stat) {
-		final ProcessArchiveStat myArchive = archives.get(stat.archiveName);
-		if (null == myArchive) {
-			archives.put(stat.archiveName, stat);
+	public void addProcessStat(final ProcessStat pStat) {
+		final ProcessStat myProcess = processes.get(pStat.processName);
+		if (null == myProcess) {
+			processes.put(pStat.processName, pStat);
 		} else {
-			myArchive.mergeStat(stat);
+			myProcess.mergeStat(pStat);
 		}
 	}
 
@@ -69,8 +68,8 @@ public class BWApplicationStat implements Serializable {
 	 *            counts to be added
 	 */
 	public void mergeStat(final BWApplicationStat stat) {
-		for (final ProcessArchiveStat archive : stat.archives.values()) {
-			addArchiveStat(archive);
+		for (final ProcessStat process : stat.processes.values()) {
+			addProcessStat(process);
 		}
 	}
 
@@ -81,10 +80,8 @@ public class BWApplicationStat implements Serializable {
 	 */
 	public IBundleCoverage toCoverageNode() {
 		final ArrayList<IClassCoverage> classes = new ArrayList<IClassCoverage>();
-		for (final ProcessArchiveStat paStat : this.archives.values()) {
-			for (final ProcessStat p : paStat.getProcesses()) {
-				classes.add(p.toCoverageNode());
-			}
+		for (final ProcessStat pStat : this.processes.values()) {
+			classes.add(pStat.toCoverageNode());
 		}
 		return new BundleCoverageImpl(this.appName, classes,
 				new ArrayList<ISourceFileCoverage>());
