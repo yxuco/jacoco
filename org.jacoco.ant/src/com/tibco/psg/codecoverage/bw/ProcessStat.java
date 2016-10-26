@@ -15,7 +15,10 @@ import java.io.Serializable;
 import java.util.TreeMap;
 
 import org.jacoco.core.analysis.IClassCoverage;
+import org.jacoco.core.analysis.ICounter;
+import org.jacoco.core.analysis.IMethodCoverage;
 import org.jacoco.core.internal.analysis.ClassCoverageImpl;
+import org.jacoco.core.internal.analysis.CounterImpl;
 
 /**
  * Stat of a BW process
@@ -95,6 +98,15 @@ public class ProcessStat implements Serializable {
 	public IClassCoverage toCoverageNode() {
 		final ClassCoverageImpl coverage = new ClassCoverageImpl(processName, 0,
 				true);
+
+		// add process invocation as an instruction
+		final ICounter instructions = executionSinceReset > 0
+				? CounterImpl.COUNTER_0_1 : CounterImpl.COUNTER_1_0;
+		final ICounter branches = CounterImpl.COUNTER_0_0;
+		coverage.increment(instructions, branches,
+				IMethodCoverage.UNKNOWN_LINE);
+
+		// add activities as instructions
 		for (final ActivityStat a : activities.values()) {
 			coverage.addMethod(a.toCoverageNode());
 		}
