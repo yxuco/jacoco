@@ -9,11 +9,32 @@ JaCoCo is a free Java code coverage library distributed under the Eclipse Public
 License. Check the [project homepage](http://www.eclemma.org/jacoco)
 for downloads, documentation and feedback.
 
-This fork added method-level "include, exclude" to coverage report for groups. To use it, edit ant build xml for report, and add the following attributes to a group tag: include="RegEx for included methods" or exclude="RegEx for excluded methods".
+This fork is based on the version 0.7.7.201606060606.  It added method-level "include, exclude" to coverage report for groups. To use it, edit ant build xml for report, and add the following attributes to a group tag: include="RegEx for included methods" or exclude="RegEx for excluded methods". For example,
+````
+<structure name="FraudDetectionCache">
+	<group name="Rules" include="execute">
+		<classfiles>
+			<fileset dir="${jacoco.work}/tmp/fdcache/FraudDetectionCache/be">
+				<include name="be/gen/Rules/**/*.class"/>
+			</fileset>
+		</classfiles>
+	</group>
+	<group name="Functions" exclude="&lt;init&gt;">
+		<classfiles>
+			<fileset dir="${jacoco.work}/tmp/fdcache/FraudDetectionCache/be">
+				<include name="be/gen/RuleFunctions/**/*$.class"/>
+			</fileset>
+		</classfiles>
+	</group>
+</structure>
+````
 
-Please use our [mailing list](https://groups.google.com/forum/?fromgroups=#!forum/jacoco)
-for questions regarding JaCoCo which are not already covered by the
-[extensive documentation](http://www.eclemma.org/jacoco/trunk/doc/).
-
-Note: We do not answer general questions in the project's issue tracker. Please use our [mailing list](https://groups.google.com/forum/?fromgroups=#!forum/jacoco) for this.
+This fork also added an ant report tag for generating code coverage reports on TIBCO BusinessWorks applications.  For example,
+````
+<jacoco:report>
+	<businessworks name="MyBWApp" jmxurl="localhost:13401"/>
+	<html destdir="${result.report.dir}" footer="TIBCO BusinessWorks Center of Excellence" />
+</jacoco:report>
+````
+Note: We do not answer general questions in the project's issue tracker. Please contact the author for details of using this fork to generate code coverage reports for TIBCO BusinessWorks and BusinessEvents applications.
 -------------------------------------------------------------------------
